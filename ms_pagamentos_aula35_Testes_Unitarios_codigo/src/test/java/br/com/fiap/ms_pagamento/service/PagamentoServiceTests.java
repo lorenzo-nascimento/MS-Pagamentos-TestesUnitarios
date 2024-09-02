@@ -104,6 +104,15 @@ public class PagamentoServiceTests {
         Assertions.assertThrows(ResourceNotFoundException.class, () -> {
             service.findById(nonExistingId);
         });
+    }
+
+    @Test
+    public void insertShuldReturnPagamentoDTO() {
+
+        PagamentoDTO result = service.insert(pagamentoDTO);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(result.getId(), pagamento.getId());
 
     }
 
