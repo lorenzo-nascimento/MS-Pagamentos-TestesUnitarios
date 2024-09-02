@@ -116,6 +116,26 @@ public class PagamentoServiceTests {
 
     }
 
+    @Test
+    public void updateShouldReturnPagamentoDTOWhenIdExists(){
+
+        PagamentoDTO result = service.update(pagamento.getId(), pagamentoDTO);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(result.getId(), existingId);
+        Assertions.assertEquals(result.getValor(), pagamento.getValor());
+
+    }
+
+    @Test
+    public void updateShouldReturnResourceNotFoundExceptionWhenIdDoesnNotExists(){
+
+        Assertions.assertThrows(ResourceNotFoundException.class, () -> {
+            service.update(nonExistingId, pagamentoDTO);
+        });
+    }
+
+
 
 }
 
