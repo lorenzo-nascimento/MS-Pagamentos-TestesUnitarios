@@ -53,6 +53,24 @@ public class PagamentoRepositoryTests {
         Assertions.assertEquals(countTotalPagamento + 1, pagamento.getId());
     }
 
+    @Test
+    @DisplayName("findById deveria retornar um Optional vazio quando o ID não existe")
+    public void findByIdShouldReturnEmptyOptionalWhenIdDoesNotExists(){
+        Optional<Pagamento> result = repository.findById(nonExistingId);
+        Assertions.assertFalse(result.isPresent());
+        // ou
+        Assertions.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findById deveria retornar um Optional não vazio quando o ID existe")
+    public void findByIdShouldReturnNonEmptyOptionalWhenIdExists(){
+        Optional<Pagamento> result = repository.findById(existingId);
+        Assertions.assertTrue(result.isPresent());
+    }
+
+
+
 }
 
 // mudança no deleteById na versão 3.X.X do spring boot - ele não lança exception
