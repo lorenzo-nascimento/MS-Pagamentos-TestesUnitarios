@@ -1,8 +1,11 @@
 package br.com.fiap.ms_pagamento.controller;
 
 import br.com.fiap.ms_pagamento.dto.PagamentoDTO;
+import br.com.fiap.ms_pagamento.service.exception.ResourceNotFoundException;
 import br.com.fiap.ms_pagamento.tests.Factory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -11,13 +14,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import br.com.fiap.ms_pagamento.service.PagamentoService;
 import org.springframework.test.web.servlet.ResultActions;
+
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import javax.xml.transform.Result;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PagamentoController.class)
 public class PagamentoControllerTests {
@@ -42,6 +49,18 @@ public class PagamentoControllerTests {
         List<PagamentoDTO> list = List.of(pagamentoDTO);
         //Simulando comportamento do service - findAll
         when(service.findAll()).thenReturn(list);
+
+        existingId = 1L;
+        nonExistingId = 10L;
+
+        // Simulando comportamento do service - findById
+        when(service.findById(existingId)).thenReturn(pagamentoDTO);
+        // findById - id não existe - lança exception
+        when(service.findById(nonExistingId)).thenThrow(ResourceNotFoundException.class);
+        when(service.insert(any())).thenReturn(pagamentoDTO);
+        when(service.insert(pagamentoDTO)).thenReturn(pagamentoDTO);
+
+
     }
 
     @Test
@@ -53,7 +72,52 @@ public class PagamentoControllerTests {
         result.andExpect(status().isOk());
     }
 
-    
+    @Test
+    public void  findByIdShouldReturnPagamentoDTOWhenIdExists() throws Exception {
 
+        ResultActions result = mockMvc.perform(get("/pagamentos/{id}", existingId)
+                .accept(MediaType.APPLICATION_JSON));
+        // Assertions
+        result.andExpect(status().isOk());
+        // analisa se tem os campos em result
+        // $ - acessar o objeto da resposta
+        result.andExpect(jsonPath("$.id").exists());
+        result.andExpect(jsonPath("$.valor").exists());
+        result.andExpect(jsonPath("$.status").exists());
+
+    }
+
+    @Test
+    @DisplayName("findById Deve retornar NotFound quando Id não existe - Erro 404")
+    public void findByIdShouldReturnNotFoundWhenIdDoesNotExist() throws Exception {
+
+        ResultActions result = mockMvc.perform(get("/pagamentos/{id}", nonExistingId)
+                .accept(MediaType.APPLICATION_JSON));
+
+        //Assertions
+        result.andExpect(status().isNotFound());
+
+    }
+
+    @Test
+    public void insertShouldReturnProductDTOCreated() throws Exception{
+        // POST tem corpo - JSON
+        //Bean objectMapper para converter JAVA para JSON
+
+        PagamentoDTO newDTO = Factory.createNewPagamentoDTO();
+        String jsonBody = objectMapper.writeValueAsString(newDTO);
+
+        mockMvc.perform(post("/pagamentos")
+                    .content(jsonBody)
+                    .contentType(MediaType.APPLICATION_JSON) // Requisição
+                    .accept(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"))
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.valor").exists())
+                .andExpect(jsonPath("$.status").exists());
+
+    }
 
 }
