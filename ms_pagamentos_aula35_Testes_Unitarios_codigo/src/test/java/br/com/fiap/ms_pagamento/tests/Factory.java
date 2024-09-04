@@ -1,5 +1,6 @@
 package br.com.fiap.ms_pagamento.tests;
 
+import br.com.fiap.ms_pagamento.dto.PagamentoDTO;
 import br.com.fiap.ms_pagamento.model.Pagamento;
 import br.com.fiap.ms_pagamento.model.Status;
 
@@ -15,4 +16,10 @@ public class Factory {
                 Status.CRIADO, 1L, 2L);
         return pagamento;
     }
+
+    public static PagamentoDTO createPagamentoDTO(){
+        Pagamento pagamento = createPagamento();
+        return new PagamentoDTO(pagamento);
+    }
+
 }
